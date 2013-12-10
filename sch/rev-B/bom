@@ -1,0 +1,9 @@
+#!/bin/sh
+# This script creates a bill of materials of Balsamo PCB. Resulting .bom file
+# can easily be imported as a CSV file in spreadsheet software like Libreoffice
+# Calc, Gnumeric and Excel. Fields are colon (:) separated.
+#
+# The script requires the file "attribs" to be present and have the right
+# format. For details, see <http://wiki.geda-project.org/geda:faq-gnetlist>
+
+gnetlist -g bom2 -o Balsamo.bom Balsamo-iface.sch Balsamo-cpu.sch

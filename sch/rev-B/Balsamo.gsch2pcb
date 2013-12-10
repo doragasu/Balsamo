@@ -1,0 +1,4 @@
+schematics Balsamo-iface.sch Balsamo-cpu.sch
+elements-dir ~/Documentos/Electr/gaf/footprints
+elements-dir ~/Documentos/Electr/gaf/symbols
+output-name Balsamo

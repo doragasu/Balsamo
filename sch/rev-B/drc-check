@@ -1,0 +1,4 @@
+#!/bin/sh
+# This script checks the design rules of the schematic files.
+
+gnetlist -g drc2 -o - Balsamo-iface.sch Balsamo-cpu.sch | tee Balsamo.drc

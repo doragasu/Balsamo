@@ -1,0 +1,1 @@
+Here you can find GERBER files for sending to a fab house. Most file names are self-explanatory. Note there is no bottom silkscreen. Balsamo.gvp file is not needed, but I leave it here because it's handy for loading the GERBER files using *Gerbv Gerber File Viewer*.
