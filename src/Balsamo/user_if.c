@@ -28,6 +28,8 @@
 #include "utils.h"
 #include <string.h>
 #include "tim_evt.h"
+#include "rtc.h"
+#include "types.h"
 
 #ifndef TRUE
 #define TRUE  1
@@ -309,6 +311,62 @@ void UifStrInputBackward(void)
 }
 
 /************************************************************************//**
+ * \brief Prints date and time in the LCD screen.
+ ****************************************************************************/
+void UifUpdateDateTime(void)
+{
+	// Date-time string, 16 characters + '\0'
+	char dt[17];
+	// Hour, minute, second, day, Month, temporal
+	BYTE h, m, s, d, M;
+	// year
+	WORD y, tmp;
+
+	RtcGetTime(&h, &m, &s);
+	RtcGetDate(&y, &M, &d);
+
+	// Lots of divisions, maybe I should optimize this a bit
+	tmp = d / 10;
+	dt[0] = '0' + tmp;
+	d -= tmp * 10;
+	dt[1] = '0' + d;
+	dt[2] = '/';
+
+	tmp = M / 10;
+	dt[3] = '0' + tmp;
+	M -= tmp * 10;
+	dt[4] = '0' + M;
+	dt[5] = '/';
+
+	tmp = y / 1000;
+	dt[6] = '0' + tmp;
+	y -= tmp * 1000;
+	tmp = y / 100;
+	dt[7] = '0' + tmp;
+	y -= tmp * 100;
+	tmp = y / 10;
+	dt[8] = '0' + tmp;
+	y -= tmp * 10;
+	dt[9] = '0' + y;
+	dt[10] = ' ';
+
+	tmp = h / 10;
+	dt[11] = '0' + tmp;
+	h -= tmp * 10;
+	dt[12] = '0' + h;
+	dt[13] = ':';
+
+	tmp = m / 10;
+	dt[14] = '0' + tmp;
+	m -= tmp * 10;
+	dt[15] = '0' + m;
+	dt[16] = '\0';
+
+	XLCD_LINE1();
+	XLCD_PUTS(dt);
+}
+
+/************************************************************************//**
  * \brief Adds current character to the string.
  *
  * \return 0 (no other code used at the moment).
@@ -371,8 +429,9 @@ static void UifStateEnter(UifState ns)
 			break;
 
 		case UIF_IDLE:
-			// TODO: Print Idle screen
-			XLCD_PUTS("IDLE");
+			// Print date and time
+			/// \todo Add more information in line 2?
+			UifUpdateDateTime();
 			break;
 
 		case UIF_OPT_ENABLE_DISABLE:
@@ -501,6 +560,8 @@ static inline void UifIdleProc(SysEvent e)
 			break;
 		case SYS_KEY_ESC:
 			break;
+		case SYS_RTC_MINUTE:
+			UifUpdateDateTime();
 		default:
 			break;
 	}

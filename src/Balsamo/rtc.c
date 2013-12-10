@@ -24,6 +24,7 @@
 #include <p30F6014.h>
 #include "rtc.h"
 #include "common.h"
+#include "system.h"
 
 /************************************************************************//**
  * \brief Enables low power 32768 Hz oscillator
@@ -33,9 +34,11 @@
 void LPOSCEnable(void);
 
 /// Time keeping variables
-static BYTE rtcYear = 2013-1980, rtcMon = 1, rtcMday = 23, rtcHour, rtcMin, rtcSec;
+static BYTE rtcYear = 2013-1980, rtcMon = 1, rtcMday = 1,
+	rtcHour = 0, rtcMin = 0, rtcSec = 0;
 
-/// RTC interrupt handler. Called once each second to keep clock counting
+/// RTC interrupt handler. Called once each second to keep clock counting.
+/// Generates RTC events each time minutes are incremented.
 void __attribute__((interrupt, auto_psv)) _T1Interrupt (void)
 {
 	static const BYTE samurai[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -47,6 +50,8 @@ void __attribute__((interrupt, auto_psv)) _T1Interrupt (void)
 	if (++rtcSec >= 60)
 	{
 		rtcSec = 0;
+		/// Generate a system event each minute
+		SysIQueuePut(SYS_RTC_MINUTE);
 		if (++rtcMin >= 60)
 		{
 			rtcMin = 0;

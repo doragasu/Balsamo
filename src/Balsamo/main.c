@@ -78,6 +78,9 @@
 	U1TXREG = (char);		\
 }
 
+/// Converts a two byte ascii number to decimal
+#define A2Dec(upper, lower)	(((upper)-'0')*10+((lower)-'0'))
+
 // Private prototypes
 void SysInit(void);
 void CallProcEnd(void);
@@ -204,6 +207,10 @@ void SysFsm(void)
 					sleep = FALSE;
 					TimEvtRun(SLEEP_EVT_TIM, SLEEP_TOUT * 1000);
 					break;
+
+				case SYS_RTC_MINUTE:
+					// Call UI FSM to refresh date and time count
+					UifEventParse(sysEvent, NULL, 0);
 				default:
 					break;
 			}// switch(sysEvent)
@@ -373,7 +380,6 @@ char ParseMessages(void)
 		{
 			case CID_MSG_DATE_TIME:
 				/// Obtain date and time
-				/// \todo Set date and time
 				if (msgLen == 8)
 				{
 					dateTime[0]  = msg[2];
@@ -384,7 +390,11 @@ char ParseMessages(void)
 					dateTime[8]  = msg[5];
 					dateTime[10] = msg[6];
 					dateTime[11] = msg[7];
-					/// \todo Set up the time
+					/// Set the time
+					/// \todo The year should be set correctly
+					RtcSetTime(2013, A2Dec(msg[0], msg[1]),
+						A2Dec(msg[2], msg[3]), A2Dec(msg[4], msg[5]),
+						A2Dec(msg[6], msg[7]), 0);
 				}
 				else lastErr = msgCode;
 				break;

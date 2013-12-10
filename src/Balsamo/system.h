@@ -60,7 +60,8 @@ typedef enum
 	SYS_KEY_ENTER,          ///< ENTER keyboard event
 	SYS_KEY_ESC,            ///< ESC keyboard event
 	SYS_KEY_FN,             ///< FN keboard event (unused)
-	SYS_SLEEP_TIM			///< Sleep timer event
+	SYS_SLEEP_TIM,			///< Sleep timer event
+	SYS_RTC_MINUTE			///< RTC has incremented a minute
 } SysEvent;
 
 /// System status
