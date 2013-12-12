@@ -60,6 +60,8 @@ typedef enum
 	UIF_OPT_TEL_LIST,			///< Browse stored telephones
 	UIF_TEL_LIST,				///< Navigate stored telephones
 	UIF_TEL_DELETE,				///< Delete stored telephone
+	UIF_OPT_YEAR_SET,			///< Set current year
+	UIF_YEAR_SET,				///< Edit year to set
 	UIF_INCOMING_CALL           ///< Incoming call
 } UifState;
 
@@ -77,7 +79,7 @@ typedef union
 /// Data needed for the user to input a string
 typedef struct
 {
-	unsigned char idx;	    ///< Index in string, used also for YES/NO
+	unsigned char idx;	   ///< Index in string, used also for YES/NO
                            /// selection (0=YES, 1=NO)
 	unsigned char chr;     ///< Character index (in available characters)
 	unsigned char maxLen;  ///< Maximum allowed string length
@@ -125,6 +127,8 @@ static const char sNo[] = "NO ";
 
 /// Module data
 static UifData ud;
+/// Temporal buffer to input numbers
+static char sNum[14];
 
 /// Advances one position in the received call list
 /// \warning: use only for list insertions
@@ -243,12 +247,19 @@ static char *UifNumGetPrev(void)
  * \param[in] first  Index to the first allowed character code
  * \param[in] last   Index to the last allowed character code
  * \param[in] maxLen Maximum string length
+ *
+ * \warning str buffer length must be at least maxLen + 1 characters, to
+ * hold the ending '\0'.
  ****************************************************************************/
 void UifStrInputStart(char str[], unsigned char first, unsigned char last,
 					  unsigned char maxLen)
 {
+	unsigned char i;
+
 	/// Enable blinking cursor
 	XLCD_CMD(DON & CURSOR_ON & BLINK_ON);
+	/// Initialize the buffer holding the string
+	for (i = 0; i < maxLen; i++) str[i] = first;
 	/// Initialize data structure and print initial character
 	ud.str.buf = str;
 	ud.str.first = ud.str.chr = first;
@@ -260,7 +271,39 @@ void UifStrInputStart(char str[], unsigned char first, unsigned char last,
 }
 
 /************************************************************************//**
- * \brief Moves string input cursor one position forward
+ * \brief Prepares the interface for the user to edit a string.
+ *
+ * \param[in] str    String buffer with the string to edit
+ * \param[in] first  Index to the first allowed character code
+ * \param[in] last   Index to the last allowed character code
+ * \param[in] maxLen Maximum string length
+ *
+ * \warning str buffer length must be at least maxLen + 1 characters, to
+ * hold the ending '\0'.
+ ****************************************************************************/
+void UifStrInputEdit(char str[], unsigned char first, unsigned char last,
+					 unsigned char maxLen, unsigned char pos)
+{
+	unsigned char i;
+
+	/// Enable blinking cursor
+	XLCD_CMD(DON & CURSOR_ON & BLINK_ON);
+	/// Initialize the buffer holding the string
+	for (i = strlen(str); i < maxLen; i++) str[i] = first;
+	str[maxLen] = '\0';
+	/// Initialize data structure and print initial character
+	ud.str.buf = str;
+	ud.str.first = first;
+	ud.str.last = last;
+	ud.str.maxLen = maxLen;
+	ud.str.chr = str[pos];
+	ud.str.idx = pos;
+	XLCD_PUTS(str);
+	for (i = pos; i < strlen(str); i++) XLCD_SHIFT_LEFT();
+}
+
+/************************************************************************//**
+ * \brief Changes current character one position forward
  ****************************************************************************/
 void UifStrInputForward(void)
 {
@@ -289,7 +332,7 @@ void UifStrInputForward(void)
 }
 
 /************************************************************************//**
- * \brief Moves string input cursor one position backwards
+ * \brief Changes current character one position backwards
  ****************************************************************************/
 void UifStrInputBackward(void)
 {
@@ -369,17 +412,18 @@ void UifUpdateDateTime(void)
 /************************************************************************//**
  * \brief Adds current character to the string.
  *
- * \return 0 (no other code used at the moment).
+ * \return The string length if when finished, or 0 if user has not yet
+ * finished entering the string.
  ****************************************************************************/
 unsigned char UifStrInputEnter(void)
 {
-	/// Check end
+	// Check end
 	if (ud.str.chr == (ud.str.last + 2))
 	{
 		ud.str.buf[ud.str.idx] = '\0';
 		return ud.str.idx;
 	}
-	/// Check back
+	// Check back
 	if (ud.str.chr == (ud.str.last + 1))
 	{
 		if (ud.str.idx > 0)
@@ -394,11 +438,20 @@ unsigned char UifStrInputEnter(void)
 	}
 	if (ud.str.idx < ud.str.maxLen)
 	{
-		/// Enter number
+		// Enter number
 		XLCD_SHIFT_RIGHT();
 		ud.str.buf[ud.str.idx++] = ud.str.chr;
-		ud.str.chr = ud.str.first;
-		XLCD_PUTC(ud.str.chr);
+		// if max length reached, put end chr, put first chr otherwise
+		if (ud.str.idx == ud.str.maxLen)
+		{
+			ud.str.chr = ud.str.last + 2;
+			XLCD_PUTC(UIF_CHR_END);
+		}
+		else
+		{
+			ud.str.chr = ud.str.buf[ud.str.idx];
+			XLCD_PUTC(ud.str.chr);
+		}
 		XLCD_SHIFT_LEFT();
 	}
 	return 0;
@@ -412,11 +465,10 @@ unsigned char UifStrInputEnter(void)
  ****************************************************************************/
 static void UifStateEnter(UifState ns)
 {
-	static char sNum[14];
 	ud.s = ns;
 	char *num;
 
-	/// Clear screen
+	// Clear screen
 	if (ns != UIF_TEL_DELETE /*&& ns != UIF_IDLE*/) XLCD_CLEAR();
 
 	switch (ns)
@@ -491,6 +543,19 @@ static void UifStateEnter(UifState ns)
 			XLCD_PUTS("DELETE?: NO     ");
 			break;
 
+		case UIF_OPT_YEAR_SET:
+			XLCD_PUTS("SET YEAR?");
+			break;
+
+		case UIF_YEAR_SET:
+			// Print number entry default screen
+			XLCD_PUTS("ENTER YEAR");
+			XLCD_LINE2();
+			XLCD_CMD(DON & CURSOR_ON & BLINK_ON);
+			strncpy(sNum, RTC_DEF_YEAR_STR, 4);
+			UifStrInputEdit(sNum, 0x30, 0x39, 4, 3);
+			break;
+
 		case UIF_INCOMING_CALL:
 			// Print call message
 			XLCD_CLEAR();
@@ -534,7 +599,9 @@ int UifInit(void)
 	ud.numFirst = ud.numLast = ud.numPos = 0;
 	ud.full = FALSE;
 	ud.f.filter_enabled = TRUE;	// Filter enabled by default
-	UifStateEnter(UIF_IDLE);
+//	UifStateEnter(UIF_IDLE);
+	// Start in the year set state, to avoid working with a wrong year
+	UifStateEnter(UIF_YEAR_SET);
 	// Just to ensure we are safe when using strncpy().
 	for (i = 0; i < UIF_NUM_RECENT_NUMS; i++) ud.recNum[i][16] = '\0';
 
@@ -551,7 +618,7 @@ static inline void UifIdleProc(SysEvent e)
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			UifStateChange(UIF_OPT_TEL_LIST);
+			UifStateChange(UIF_OPT_YEAR_SET);
 			break;
 		case SYS_KEY_DOWN:
 			UifStateChange(UIF_OPT_ENABLE_DISABLE);
@@ -610,7 +677,7 @@ static inline void UifOptAddLastNum(SysEvent e)
 			UifStateChange(UIF_OPT_ADD_NUM);
 			break;
 		case SYS_KEY_ENTER:
-			/// ADD LAST NUMBER TO LIST
+			// ADD LAST NUMBER TO LIST
 			TfNumAdd(ud.recNum[ud.numLast]);
 			TfCfgSave();
 			UifStateChange(UIF_IDLE);
@@ -659,18 +726,18 @@ static inline void UifAddNum(SysEvent e)
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			/// Digit move routine
+			// Digit move routine
 			UifStrInputForward();
 			break;
 		case SYS_KEY_DOWN:
-			/// Digit move routine
+			// Digit move routine
 			UifStrInputBackward();
 			break;
 		case SYS_KEY_ENTER:
-			/// Check if number complete, and add to list
+			// Check if number complete, and add to list
 			if (UifStrInputEnter())
 			{
-				/// Add number to the list
+				// Add number to the list
 				XLCD_CMD(DON & CURSOR_OFF & BLINK_OFF);
 				TfNumAdd(ud.str.buf);
 				TfCfgSave();
@@ -678,7 +745,7 @@ static inline void UifAddNum(SysEvent e)
 			}
 			break;
 		case SYS_KEY_ESC:
-			/// Abort number entry, return to IDLE state.
+			// Abort number entry, return to IDLE state.
 			XLCD_CMD(DON & CURSOR_OFF & BLINK_OFF);
 			UifStateChange(UIF_OPT_ADD_NUM);
 			break;
@@ -723,11 +790,11 @@ static inline void UifCallList(SysEvent e)
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			/// Show next number
+			// Show next number
 			UifNumGetNext();
 			break;
 		case SYS_KEY_DOWN:
-			/// Show previous number
+			// Show previous number
 			UifNumGetPrev();
 			break;
 		case SYS_KEY_ENTER:
@@ -754,7 +821,7 @@ static inline void UifOptTelList(SysEvent e)
 			UifStateChange(UIF_OPT_CALL_LIST);
 			break;
 		case SYS_KEY_DOWN:
-			UifStateChange(UIF_IDLE);
+			UifStateChange(UIF_OPT_YEAR_SET);
 			break;
 		case SYS_KEY_ENTER:
 			UifStateChange(UIF_TEL_LIST);
@@ -780,7 +847,7 @@ static inline void UifTelList(SysEvent e)
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			/// Show next number
+			// Show next number
 			if ((num = TfNumGetNext()))
 			{
 				XLCD_LINE2();
@@ -790,7 +857,7 @@ static inline void UifTelList(SysEvent e)
 			}
 			break;
 		case SYS_KEY_DOWN:
-			/// Show previous number
+			// Show previous number
 			break;
 		case SYS_KEY_ENTER:
 			UifStateChange(UIF_TEL_DELETE);
@@ -844,6 +911,89 @@ static inline void UifTelDelete(SysEvent e)
 }
 
 /************************************************************************//**
+ * \brief Processes events while in the year set option screen.
+ *
+ * \param[in] e Received event to process
+ ****************************************************************************/
+static inline void UifOptYearSet(SysEvent e)
+{
+	switch (e)
+	{
+		case SYS_KEY_UP:
+			UifStateChange(UIF_OPT_TEL_LIST);
+			break;
+		case SYS_KEY_DOWN:
+			UifStateChange(UIF_IDLE);
+			break;
+		case SYS_KEY_ENTER:
+			UifStateChange(UIF_YEAR_SET);
+			break;
+		case SYS_KEY_ESC:
+			UifStateChange(UIF_IDLE);
+			break;
+		default:
+			break;
+	}
+}
+
+/************************************************************************//**
+ * \brief Processes events while in the year set screen.
+ *
+ * \param[in] e Received event to process
+ ****************************************************************************/
+static inline void UifYearSet(SysEvent e)
+{
+	WORD tmp;
+
+	switch (e)
+	{
+		case SYS_KEY_UP:
+			// Digit move routine
+			UifStrInputForward();
+			break;
+		case SYS_KEY_DOWN:
+			// Digit move routine
+			UifStrInputBackward();
+			break;
+		case SYS_KEY_ENTER:
+			// Check number and set time if OK
+			if ((tmp = UifStrInputEnter()))
+			{
+				if (tmp != 4)
+				{
+					// Years must have 4 digits, retry otherwise
+					XLCD_CLEAR();
+					XLCD_PUTS("WRONG YEAR, RETR")
+					strncpy(sNum, RTC_DEF_YEAR_STR, 4);
+					XLCD_LINE2();
+					UifStrInputEdit(sNum, 0x30, 0x39, 4, 3);
+				}
+				else
+				{
+					// Set year
+					XLCD_CMD(DON & CURSOR_OFF & BLINK_OFF);
+					// ud.str.buf
+					tmp = (ud.str.buf[0] - '0') * 1000 +
+						  (ud.str.buf[1] - '0') * 100  +
+						  (ud.str.buf[2] - '0') * 10   +
+						  (ud.str.buf[3] - '0');
+					/// \todo Check year is between 1980 and 2235
+					RtcSetYear(tmp);
+					UifStateChange(UIF_IDLE);
+				}
+			}
+			break;
+		case SYS_KEY_ESC:
+			/// Abort number entry, return to IDLE state.
+			XLCD_CMD(DON & CURSOR_OFF & BLINK_OFF);
+			UifStateChange(UIF_OPT_YEAR_SET);
+			break;
+		default:
+			break;
+	}
+}
+
+/************************************************************************//**
  * \brief User interface state machine. Processes key press events, and
  * also other system events, updating user interface status accordingly.
  *
@@ -853,7 +1003,7 @@ static inline void UifTelDelete(SysEvent e)
  ****************************************************************************/
 void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 {
-	/// Incoming call event has priority over the rest of events
+	// Incoming call event has priority over the rest of events
 	if (sysEvt == SYS_RING)
 	{
 		UifStateChange(UIF_INCOMING_CALL);
@@ -899,6 +1049,12 @@ void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 			break;
 		case UIF_TEL_DELETE:
 			UifTelDelete(sysEvt);
+			break;
+		case UIF_OPT_YEAR_SET:
+			UifOptYearSet(sysEvt);
+			break;
+		case UIF_YEAR_SET:
+			UifYearSet(sysEvt);
 			break;
 		case UIF_INCOMING_CALL:
 			switch (sysEvt)

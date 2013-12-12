@@ -1,4 +1,4 @@
-Balsamo
+﻿Balsamo
 =======
 
 An interface for unwanted calls filtering. The name is derived from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". When it detects an incoming call, BALSAMO decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside a SD card.
@@ -48,7 +48,7 @@ A GNU Octave/Matlab script called wav2raw is provided under src/wav2raw, to conv
 Some features I might add (if I get the time and motivation)
 ============================================================
 
-- [ ] Real time clock. This is partially implemented. Finishing it should be dead easy.
+- [x] Real time clock. Done!
 - [ ] Logging to a file inside the SD-card. This is also partially implemented, should be easy, but requires that the RTC is finished first.
 - [ ] Call recording support. Should be easy using the free [dsPIC DSC Speex Speech Encoding/Decoding Library](http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023610).
 - [ ] Answering machine functionalities. Should also be very easy once voice recording is implemented. It will use the audio amplifier included in Rev.B PCB (but still untested) 

@@ -26,6 +26,9 @@
 
 #include "types.h"
 
+#define RTC_DEF_YEAR_STR	"2014"
+#define RTC_DEF_YEAR_NUM	 2014
+
 /** \defgroup rtc_api rtc
  *
  * Real Time Clock module.
@@ -37,16 +40,22 @@
 void RtcStart(void);
 
 /************************************************************************//**
- * \brief Sets date and time
+ * \brief Sets date and time (excepting year).
  *
- * \param[in] year Year to set (e.g. 2013).
  * \param[in] mon  Month to set (1 ~ 12).
  * \param[in] day  Day to set (1 ~ 31).
  * \param[in] hour Hour to set (0 ~ 23).
  * \param[in] min  Minute to set (0 ~ 59).
  * \param[in] sec  Second to set (0 ~ 59).
  ****************************************************************************/
-void RtcSetTime(WORD year, BYTE mon, BYTE day, BYTE hour, BYTE min, BYTE sec);
+void RtcSetTime(BYTE mon, BYTE day, BYTE hour, BYTE min, BYTE sec);
+
+/************************************************************************//**
+ * \brief Sets year.
+ *
+ * \param[in] year Year to set (e.g. 2014).
+ ****************************************************************************/
+void RtcSetYear(WORD year);
 
 /************************************************************************//**
  * \brief Gets time

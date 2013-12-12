@@ -392,7 +392,7 @@ char ParseMessages(void)
 					dateTime[11] = msg[7];
 					/// Set the time
 					/// \todo The year should be set correctly
-					RtcSetTime(2013, A2Dec(msg[0], msg[1]),
+					RtcSetTime(A2Dec(msg[0], msg[1]),
 						A2Dec(msg[2], msg[3]), A2Dec(msg[4], msg[5]),
 						A2Dec(msg[6], msg[7]), 0);
 				}

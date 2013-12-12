@@ -34,7 +34,7 @@
 void LPOSCEnable(void);
 
 /// Time keeping variables
-static BYTE rtcYear = 2013-1980, rtcMon = 1, rtcMday = 1,
+static BYTE rtcYear = RTC_DEF_YEAR_NUM-1980, rtcMon = 1, rtcMday = 1,
 	rtcHour = 0, rtcMin = 0, rtcSec = 0;
 
 /// RTC interrupt handler. Called once each second to keep clock counting.
@@ -88,25 +88,37 @@ void RtcStart(void)
 }
 
 /************************************************************************//**
- * \brief Sets date and time
+ * \brief Sets date and time (excepting year)
  *
- * \param[in] year Year to set (e.g. 2013).
  * \param[in] mon  Month to set (1 ~ 12).
  * \param[in] day  Day to set (1 ~ 31).
  * \param[in] hour Hour to set (0 ~ 23).
  * \param[in] min  Minute to set (0 ~ 59).
  * \param[in] sec  Second to set (0 ~ 59).
  ****************************************************************************/
-void RtcSetTime(WORD year, BYTE mon, BYTE day, BYTE hour, BYTE min, BYTE sec)
+void RtcSetTime(BYTE mon, BYTE day, BYTE hour, BYTE min, BYTE sec)
 {
 	_DI();
 
-	rtcYear = year - 1980;
 	rtcMon = mon;
 	rtcMday = day;
 	rtcHour = hour;
 	rtcMin = min;
 	rtcSec = sec;
+
+	_EI();
+}
+
+/************************************************************************//**
+ * \brief Sets year.
+ *
+ * \param[in] year Year to set (e.g. 2014).
+ ****************************************************************************/
+void RtcSetYear(WORD year)
+{
+	_DI();
+
+	rtcYear = year - 1980;
 
 	_EI();
 }
