@@ -5,3 +5,5 @@ src/Balsamo/Balsamo.mptags
 src/Balsamo/Balsamo.tagsrc
 src/Balsamo/libp30F6014-coff.a
 src/Balsamo/out/*
+src/wav2raw/*.wav
+src/wav2raw/*.raw

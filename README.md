@@ -43,7 +43,7 @@ Configuration file format
 Creating RAW audio files for BALSAMO
 ====================================
 
-*TODO*
+A GNU Octave/Matlab script called wav2raw is provided under src/wav2raw, to convert 8 kHz MONO wav files to the RAW format used by BALSAMO. The src/wav2raw/README.md has additional details about how to use this script to generate the RAW audio files.
 
 Some features I might add (if I get the time and motivation)
 ============================================================
