@@ -1,13 +1,21 @@
-﻿Balsamo
+Balsamo
 =======
 
 An interface for unwanted calls filtering. The name is derived from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". When it detects an incoming call, BALSAMO decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside a SD card.
 
-BALSAMO uses a simple user interface, with a 16x2 characters LCD display, 5 pushbuttons (only 4 are used so far) and 4 LEDs. It also includes a microSD card slot used to load and store system configuration, allowed/restricted phone numbers and raw audio files to be played back to the caller.
-
-This project is powered by a custom PCB equipped with a dsPIC30F6014 for telephone signal sampling, FSK demodulation and system and user interfaces. Audio messages are played using PWM technique, so no additional DAC is needed.
-
-Everything in this project (source code, schematics, board files and documentation, excepting external libraries used) is GPLv3+ licensed.
+Features
+========
+- Caller ID (CID) decoding, to obtain the caller's number.
+- Capability to blacklist/whitelist calls, based on caller's number and on wether the caller number is private/hidden.
+- Two different audio messages can be played to the caller, each time a call is rejected. One message is for calls blacklisted or not included in the whitelist. The other is for private/hidden calls.
+- microSD card slot. The card records the audio message files, the configuration file (including the blacklist/whitelist) and the log file.
+- Logs to microSD card all the calls, and the action performed in each of them (ALLOW/REJECT).
+- Simple user interface with a 2x16 LCD and 5 pushbuttons (only 4 of them are used so far).
+- Very low power design. While idle (most of the time, waiting for an incoming call) most of the system is shut down (almost everything excepting the RING detector), draining around 1 mA.
+- Custom PCB with one chip (a dsPIC) performing most of the actions. No external ADC, DAC, CID decoder, SD controller, Flash memory chip, etc. Only a dsPIC and some analog chips.
+- Design allows for a backup battery to be used, for the system to continue operating (and without losing date and time) when the main power source fails.
+- Lots of free PADs in the PCB, to allow hacking/expanding the design when needed.
+- Everything in this project (source code, schematics, board files and documentation, excepting external libraries used) is GPLv3+ licensed.
 
 External components used
 ========================
@@ -45,14 +53,14 @@ Creating RAW audio files for BALSAMO
 
 A GNU Octave/Matlab script called wav2raw is provided under src/wav2raw, to convert 8 kHz MONO wav files to the RAW format used by BALSAMO. The src/wav2raw/README.md has additional details about how to use this script to generate the RAW audio files.
 
-Some features I might add (if I get the time and motivation)
+Some features I might add
 ============================================================
 
-- [x] Real time clock. Done!
-- [ ] Logging to a file inside the SD-card. This is also partially implemented, should be easy, but requires that the RTC is finished first.
-- [ ] Call recording support. Should be easy using the free [dsPIC DSC Speex Speech Encoding/Decoding Library](http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023610).
-- [ ] Answering machine functionalities. Should also be very easy once voice recording is implemented. It will use the audio amplifier included in Rev.B PCB (but still untested) 
-- [ ] Different audio message playing depending on caller number.
-- [ ] Use PWM to drive LCD backlight, so the variable resistor used to set backlight intensity can be removed.
+Some things I'm planning to add (if I get the time and motivation):
+
+- Call recording support. Recording should be relatively easy using the free [dsPIC DSC Speex Speech Encoding/Decoding Library](http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023610), but I have to figure out a way to guess when the caller has hung.
+- [ ] Answering machine functionalities. Should also be very easy once voice recording is implemented. It will use the audio amplifier included in Rev.B PCB (already tested and working).
+- Different audio message playing depending on caller number.
+- Use PWM to drive LCD backlight, so the variable resistor used to set backlight intensity can be removed.
 
 Enjoy!
