@@ -33,7 +33,7 @@
 #include <p30F6014.h>
 #include "../types.h"
 
-//#define _SPEAKER_TEST
+#define _SPEAKER_TEST
 
 /// \defgroup PwmPlayRegs Timer and Output Compare registers used by PwmPlay
 /// module. x can be from 1 to 8. y can be 2 or 3.

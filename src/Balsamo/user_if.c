@@ -152,6 +152,25 @@ static char sNum[14];
 }
 
 /************************************************************************//**
+ * \brief Prints a string in line 2 of the LCD. If the string has less than
+ * 16 characters, blanks are printed until 16 characters are filled.
+ *
+ * \param[in] str String to print.
+ ****************************************************************************/
+static void UifPrintStrLine2(char* str)
+{
+	char length;
+
+	if (str)
+	{
+		XLCD_LINE2();
+		length = strlen(str);
+		XLCD_PUTS(str);
+		for (; length < 16; length++) XLCD_PUTC(' ');
+	}
+}
+
+/************************************************************************//**
  * \brief Insert a number in the received call list. Overwrites the older
  * number if the list is full.
  *
@@ -790,12 +809,12 @@ static inline void UifCallList(SysEvent e)
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			// Show next number
-			UifNumGetNext();
+			// Show prev number
+			UifPrintStrLine2(UifNumGetPrev());
 			break;
 		case SYS_KEY_DOWN:
-			// Show previous number
-			UifNumGetPrev();
+			// Show next number
+			UifPrintStrLine2(UifNumGetNext());
 			break;
 		case SYS_KEY_ENTER:
 			UifStateChange(UIF_IDLE);
@@ -841,23 +860,13 @@ static inline void UifOptTelList(SysEvent e)
  ****************************************************************************/
 static inline void UifTelList(SysEvent e)
 {
-	char length;
-	char *num;
-
 	switch (e)
 	{
 		case SYS_KEY_UP:
-			// Show next number
-			if ((num = TfNumGetNext()))
-			{
-				XLCD_LINE2();
-				length = strlen(num);
-				XLCD_PUTS(num);
-				for (; length < 16; length++) XLCD_PUTC(' ');
-			}
+			UifPrintStrLine2(TfNumGetPrev());
 			break;
 		case SYS_KEY_DOWN:
-			// Show previous number
+			UifPrintStrLine2(TfNumGetNext());
 			break;
 		case SYS_KEY_ENTER:
 			UifStateChange(UIF_TEL_DELETE);

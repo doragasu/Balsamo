@@ -103,6 +103,14 @@ char *TfNumGetFirst(void);
 char *TfNumGetNext(void);
 
 /************************************************************************//**
+ * \brief Gets the previous number stored in the telephone book.
+ *
+ * \return The previous number stored in the telephone book, or NULL if there
+ * are no more numbers in the telephone book.
+ ****************************************************************************/
+char* TfNumGetPrev(void);
+
+/************************************************************************//**
  * \brief Deletes the current telephone number from the telephone book.
  ****************************************************************************/
 void TfNumDelete(void);

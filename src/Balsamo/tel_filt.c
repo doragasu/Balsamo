@@ -129,8 +129,26 @@ char *TfNumGetNext(void)
 	/// Check if we have reached the end
 	if (readPos >= end) return NULL;
 
+	/// Advance one number
 	pos = readPos;
 	readPos += strlen(nums + readPos) + 1;
+	return nums + pos;
+}
+
+/************************************************************************//**
+ * \brief Gets the previous number stored in the telephone book.
+ *
+ * \return The previous number stored in the telephone book, or NULL if there
+ * are no more numbers in the telephone book.
+ ****************************************************************************/
+char* TfNumGetPrev(void)
+{
+	/// Check we are not at the beginning
+	if (0 == pos) return NULL;
+
+	readPos = pos;
+	pos -= 2;	// Skip ending '\0' from previous number
+	while (nums[pos - 1] && (pos > 0)) pos--;
 	return nums + pos;
 }
 

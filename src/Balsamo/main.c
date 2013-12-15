@@ -277,7 +277,7 @@ void SysFsm(void)
 									case 1:
 									// Reject call because of private/unknown
 									case 2:
-										// Pick up and then end call
+										// Pick up
 										LinePickUp();
 										SetD204(LED_ON);
 										sysStat = SYS_LINE_HANG_WAIT;
@@ -338,7 +338,8 @@ void SysFsm(void)
 			if (sysEvent == SYS_TIM_EVT)
 			{
 				// Play message and end call
-				RawPlayFile(reason == 1?FILE_MSG_FILTERED:FILE_MSG_FORBIDDEN);
+				RawPlayFile(reason == 1?FILE_MSG_FORBIDDEN:FILE_MSG_FILTERED);
+//				RawPlayFile(reason == 1?FILE_MSG_FILTERED:FILE_MSG_FORBIDDEN);
 				LineHang();
 				CallProcEnd();
 			}
@@ -391,7 +392,6 @@ char ParseMessages(void)
 					dateTime[10] = msg[6];
 					dateTime[11] = msg[7];
 					/// Set the time
-					/// \todo The year should be set correctly
 					RtcSetTime(A2Dec(msg[0], msg[1]),
 						A2Dec(msg[2], msg[3]), A2Dec(msg[4], msg[5]),
 						A2Dec(msg[6], msg[7]), 0);
@@ -554,6 +554,9 @@ void SysInit(void)
 	/// Keypad initialization
 	KeybInit();
 	KeybIntsEnable();
+
+	/// PWM player module initialization
+	RawPlayInit();
 }
 
 /// End call process. Stops ADC, resets FSK demodulator and CID decoder, and

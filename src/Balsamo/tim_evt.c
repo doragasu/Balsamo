@@ -52,7 +52,7 @@ void TimEvtInit(void)
 	/// \todo Enlarge timeout to 10 or even 100 ms
 	PR4 = FCY / 1000;	// 5530 cycles (+6,25 sec/day)
 	T4CON = 0x8000;		// TON, no prescaler
-	/// Enable Timer2 interrupt.
+	/// Enable Timer4 interrupt.
 	_T4IE = 1;
 }
 

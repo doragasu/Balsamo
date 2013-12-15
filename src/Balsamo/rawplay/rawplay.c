@@ -51,7 +51,6 @@ static BYTE play;
  * \return Pointer to a new block of audio data.
  * \note This callback is ran in interrupt context
  ****************************************************************************/
-///
 BYTE* DataReadCallback(UINT* dataLen)
 {
 	/// Signal main() routine to read the next audio data chunck
@@ -59,6 +58,15 @@ BYTE* DataReadCallback(UINT* dataLen)
 	/// Return the pointer and data length of the data
 	*dataLen = readed;
 	return buf[frm & 1];
+}
+
+void AmpEnable(void)
+{
+	TRISDbits.TRISD10 = 0;
+	TRISDbits.TRISD11 = 0;
+
+	LATDbits.LATD11 = 0;
+	LATDbits.LATD10 = 1;
 }
 
 /************************************************************************//**
@@ -76,6 +84,8 @@ void RawPlayInit(void)
 	frm = 0;
 	/// pwmplay module initialization
 	PwmPlayInit();
+	// Just to do some tests
+	AmpEnable();
 }
 
 /************************************************************************//**

@@ -105,7 +105,7 @@ void PwmPlayStop(void)
 /************************************************************************//**
  * \ Timer interrupt handler. Writes the correct value to the PWM for audio
  * generation.
-
+ *
  * 4 values per sample are written, so linear averaging is used
  * to calculate 3 of the 4 bytes needed per sample.
  ****************************************************************************/
