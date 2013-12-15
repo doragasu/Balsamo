@@ -8,5 +8,6 @@ src/Balsamo/out/*.o
 src/Balsamo/out/*.cof
 src/Balsamo/out/*.map
 src/Balsamo/out/*.lst
+src/Balsamo/out/*.hex
 src/wav2raw/*.wav
 src/wav2raw/*.raw

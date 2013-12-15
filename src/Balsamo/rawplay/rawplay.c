@@ -60,14 +60,23 @@ BYTE* DataReadCallback(UINT* dataLen)
 	return buf[frm & 1];
 }
 
-void AmpEnable(void)
+#ifdef _SPEAKER_TEST
+static inline void AmpInit(void)
 {
+	/// Init amplifier control bits
 	TRISDbits.TRISD10 = 0;
 	TRISDbits.TRISD11 = 0;
 
+	/// Set minimum gain and disable amplifier
+	LATDbits.LATD10 = 0;
 	LATDbits.LATD11 = 0;
-	LATDbits.LATD10 = 1;
 }
+#endif
+
+#define AmpEnable()		do{LATDbits.LATD10 = 1;}while(0)
+
+#define AmpDisable()	do{LATDbits.LATD10 = 0;}while(0)
+
 
 /************************************************************************//**
  * \brief Module initialization. Must be called once before using the other
@@ -84,8 +93,10 @@ void RawPlayInit(void)
 	frm = 0;
 	/// pwmplay module initialization
 	PwmPlayInit();
+#ifdef _SPEAKER_TEST
 	// Just to do some tests
-	AmpEnable();
+	AmpInit();
+#endif
 }
 
 /************************************************************************//**
@@ -102,6 +113,9 @@ BYTE RawPlayFile(char file[])
 	/// Open audio file
 	if (f_open(&f, file, FA_READ)) return 1;
 
+	/// Reset frame pointer
+	frm = 0;
+
 	/// Pre allocate the first chunck of data
 	if (f_read(&f, buf[frm], RAWP_BUF_NS, &readed))
 	{
@@ -109,6 +123,9 @@ BYTE RawPlayFile(char file[])
 		return 2;
 	}
 
+#ifdef _SPEAKER_TEST
+	AmpEnable();
+#endif
 	/// Start playing the audio file
 	PwmPlayStart(DataReadCallback);
 
@@ -124,6 +141,9 @@ BYTE RawPlayFile(char file[])
 			readNext = FALSE;
 			if (f_read(&f, buf[++frm&1], RAWP_BUF_NS, &readed))
 			{
+#ifdef _SPEAKER_TEST
+				AmpDisable();
+#endif
 				f_close(&f);
 				play = FALSE;
 				return 3;
@@ -132,6 +152,9 @@ BYTE RawPlayFile(char file[])
 			if (readed < RAWP_BUF_NS) play = FALSE;
 		}
 	}
+#ifdef _SPEAKER_TEST
+	AmpDisable();
+#endif
 	/// Everything OK, close file and exit
 	f_close(&f);
 	return 0;
