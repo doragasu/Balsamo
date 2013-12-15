@@ -59,7 +59,7 @@ Some features I might add
 Some things I'm planning to add (if I get the time and motivation):
 
 - Call recording support. Recording should be relatively easy using the free [dsPIC DSC Speex Speech Encoding/Decoding Library](http://www.microchip.com/stellent/idcplg?IdcService=SS_GET_PAGE&nodeId=1406&dDocName=en023610), but I have to figure out a way to guess when the caller has hung.
-- [ ] Answering machine functionalities. Should also be very easy once voice recording is implemented. It will use the audio amplifier included in Rev.B PCB (already tested and working).
+- Answering machine functionalities. Should also be very easy once voice recording is implemented. It will use the audio amplifier included in Rev.B PCB (already tested and working).
 - Different audio message playing depending on caller number.
 - Use PWM to drive LCD backlight, so the variable resistor used to set backlight intensity can be removed.
 
