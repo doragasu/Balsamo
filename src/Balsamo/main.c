@@ -88,6 +88,8 @@ void TimEvtWait(unsigned int countMs);
 char ParseMessages(void);
 void FatFsHwInit(void);
 void SysFsm(void);
+void Log(char str[]);
+void LogNumStr(char num[], char str[]);
 
 /// Line 1 of the welcome message
 static const char line1[] = "BALSAMO HW Rev.B";
@@ -164,7 +166,7 @@ void SysFsm(void)
 	/// Demodulated bytes buffer
 	BYTE recvBuf[NS/FSK_SPB/10 + 1];
 	/// Handles return codes
-	BYTE reason = 0;
+	static BYTE reason = 0;
 	/// Lenght of the received packet
 	int recvLen;
 #ifdef _DEBUG
@@ -269,6 +271,7 @@ void SysFsm(void)
 									case 0:
 										// Call allowed, end process and idle
 										CallProcEnd();
+										LogNumStr(telNum, "ALLOWED");
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
 										break;
@@ -284,6 +287,7 @@ void SysFsm(void)
 										/// \todo Play message from SD card
 										AdcStop();
 										TimEvtRun(SYS_EVT_TIM, 1 * 1000);
+										LogNumStr(telNum, "BLOCKED");
 										/// \todo Send message to user_if
 										UifEventParse(SYS_CALL_RESTRICTED,
 											telNum, 16);
@@ -308,6 +312,7 @@ void SysFsm(void)
 					XLCD_CLEAR();
 					XLCD_PUTS("NOT SENT!");
 					TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM * 1000);
+					Log("NOT SENT!");
 					break;
 				default:
 					break;
@@ -326,7 +331,6 @@ void SysFsm(void)
 
 				case SYS_TIM_EVT:
 					// We finished receiving RINGs, end call process
-					if (evLog) f_puts("UNKNOWN CALL\n", &fLog);
 					CallProcEnd();
 					break;
 				default:
@@ -338,8 +342,7 @@ void SysFsm(void)
 			if (sysEvent == SYS_TIM_EVT)
 			{
 				// Play message and end call
-				RawPlayFile(reason == 1?FILE_MSG_FORBIDDEN:FILE_MSG_FILTERED);
-//				RawPlayFile(reason == 1?FILE_MSG_FILTERED:FILE_MSG_FORBIDDEN);
+				RawPlayFile(reason == 1?FILE_MSG_FILTERED:FILE_MSG_FORBIDDEN);
 				LineHang();
 				CallProcEnd();
 			}
@@ -447,17 +450,6 @@ char ParseMessages(void)
 		dateTime[14] = hex[msgCode>>4];
 		dateTime[15] = hex[msgCode&15];
 	}
-
-	// Write to screen
-//	XLCD_BUSY_WAIT();
-//	WriteCmdXLCD(CLEAR_XLCD);
-//	XLCD_PUTS(dateTime);
-//	XLCD_LINE2();
-//	XLCD_PUTS(telNum);
-
-	/// Log to file
-	if (evLog) f_printf(&fLog, "%s --> %s\n", dateTime, telNum);
-
 	return retVal;
 }
 
@@ -536,9 +528,9 @@ void SysInit(void)
 
 	/// Open log file and place cursor at its end.
 	/// \warning If log file opening fails, the system will not warn user.
-	retVal = f_open(&fLog, "BALSAMO.LOG", FA_WRITE | FA_OPEN_ALWAYS);
+	retVal = f_open(&fLog, "BALSAMO.LOG", FA_READ | FA_WRITE | FA_OPEN_ALWAYS);
 	if (!retVal) retVal = f_lseek(&fLog, f_size(&fLog));
-	evLog = retVal?FALSE:TRUE;
+	evLog = !retVal;
 
 	/// User interface initialization
 	UifInit();
@@ -597,4 +589,42 @@ void FatFsHwInit(void)
 	TRISG &= ~(BIT6 | BIT8 | BIT9);
 	/// Enable internal pullup for SDI2 (CN9)
 	CNPU1 |= BIT9;
+}
+
+/************************************************************************//**
+ * \brief Logs a string to log file, preceded by the date and time.
+ *
+ * \param[in] str String to log along with num.
+ ****************************************************************************/
+void Log(char str[])
+{
+	WORD y;
+	BYTE mo, d, h, mi, s;
+
+	_DI();
+	RtcGetDate(&y, &mo, &d);
+	RtcGetTime(&h, &mi, &s);
+
+	f_printf(&fLog, "%02d/%02d/%d, %02d:%02d --> %s\n", d, mo, y, h, mi, str);
+	f_sync(&fLog);
+}
+
+/************************************************************************//**
+ * \brief Logs a number and an action, preceded by date and time.
+ *
+ * \param[in] num String containing the number to log.
+ * \param[in] str String to log along with num.
+ ****************************************************************************/
+void LogNumStr(char num[], char str[])
+{
+	WORD y;
+	BYTE mo, d, h, mi, s;
+
+	_DI();
+	RtcGetDate(&y, &mo, &d);
+	RtcGetTime(&h, &mi, &s);
+
+	f_printf(&fLog, "%02d/%02d/%d, %02d:%02d --> %s %s\n", d, mo, y, h, mi,
+			 num, str);
+	f_sync(&fLog);	
 }
