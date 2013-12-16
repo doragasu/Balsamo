@@ -1,16 +1,18 @@
 Balsamo
 =======
 
-An interface for unwanted calls filtering. The name is derived from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". When it detects an incoming call, BALSAMO decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside a SD card.
+An interface for unwanted calls filtering. The name is derived from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". When it detects an incoming call, BALSAMO decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside an SD card.
 
 Features
 ========
 - Caller ID (CID) decoding, to obtain the caller's number.
 - Capability to blacklist/whitelist calls, based on caller's number and on wether the caller number is private/hidden.
+- Both blacklist (block all numbers inside the list) and whitelist (allow only the numbers inside the list) are supported.
+- Private/hidden numbers can also be allowed or rejected.
 - Two different audio messages can be played to the caller, each time a call is rejected. One message is for calls blacklisted or not included in the whitelist. The other is for private/hidden calls.
 - microSD card slot. The card records the audio message files, the configuration file (including the blacklist/whitelist) and the log file.
-- Logs to microSD card all the calls, and the action performed in each of them (ALLOW/REJECT).
-- Simple user interface with a 2x16 LCD and 5 pushbuttons (only 4 of them are used so far).
+- Logs to microSD card all the calls, and the action performed for each of them (ALLOW/REJECT).
+- Simple user interface with a 2x16 LCD, 4 LEDs and 5 pushbuttons (only 4 of them are used so far).
 - Very low power design. While idle (most of the time, waiting for an incoming call) most of the system is shut down (almost everything excepting the RING detector), draining around 1 mA.
 - Custom PCB with one chip (a dsPIC) performing most of the actions. No external ADC, DAC, CID decoder, SD controller, Flash memory chip, etc. Only a dsPIC and some analog chips.
 - Design allows for a backup battery to be used, for the system to continue operating (and without losing date and time) when the main power source fails.
