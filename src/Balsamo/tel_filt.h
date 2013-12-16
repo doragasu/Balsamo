@@ -38,9 +38,16 @@
 
 /// The checked number is not blacklisted
 #define TF_NUM_OK			0
-/// The checked number is blacklisted
-#define TF_NUM_BLACKLIST	1
-
+/// The checked number is blacklisted or not in the whitelist
+#define TF_NUM_REJECT		1
+/// The checked number should be rejected, but call filter is disabled
+#define TF_FILTER_DISABLED	2
+/// Hidden calls are OK
+#define TF_HID_OK			3
+/// Hidden calls must be rejected
+#define TF_HID_REJECT		4
+/// Hidden calls should be rejected but filter is disabled.
+#define TF_HID_DISABLED		5
 /************************************************************************//**
  * \brief Module initialization. Must be called before using any other
  * function.
@@ -64,8 +71,9 @@ char TfNumAdd(char number[]);
  *
  * \param[in] number Telephone number to check.
  *
- * \return TF_NUM_OK if the number is allowed or TF_NUM_BLACKLIST if the
- * number is blacklisted.
+ * \return TF_NUM_OK if the number is allowed, TF_NUM_REJECT if the number
+ * is blacklisted (or not in the whitelist), TF_NUM_FILTER_DISABLED if the
+ * number should be rejected, but call filter is disabled.
  ****************************************************************************/
 char TfNumCheck(char number[]);
 
@@ -81,8 +89,9 @@ char TfParseConfig(void);
 /************************************************************************//**
  * \brief Tells if hidden numbers are either allowed or filtered out.
  *
- * \return TRUE if hidden numbers are filtered, or FALSE if hidden numbers
- * are allowed.
+ * \return TF_HID_OK if hidden calls must not be filtered, TF_HID_REJECT if
+ * hidden calls must be rejected, or TF_HID_DISABLED if hidden call should
+ * be rejected but call filter is disabled.
  ****************************************************************************/
 char TfFilterHidden(void);
 
@@ -121,6 +130,16 @@ void TfNumDelete(void);
  * \return 0 if OK, nonzero otherwise.
  ****************************************************************************/
 char TfCfgSave(void);
+
+/************************************************************************//**
+ * \brief Disables call filtering.
+ ****************************************************************************/
+void TfDisable(void);
+
+/************************************************************************//**
+ * \brief Enables call filtering.
+ ****************************************************************************/
+void TfEnable(void);
 
 /** \} */
 

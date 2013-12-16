@@ -618,7 +618,6 @@ int UifInit(void)
 	ud.numFirst = ud.numLast = ud.numPos = 0;
 	ud.full = FALSE;
 	ud.f.filter_enabled = TRUE;	// Filter enabled by default
-//	UifStateEnter(UIF_IDLE);
 	// Start in the year set state, to avoid working with a wrong year
 	UifStateEnter(UIF_YEAR_SET);
 	// Just to ensure we are safe when using strncpy().
@@ -670,10 +669,19 @@ static inline void UifOptEnableDisable(SysEvent e)
 			UifStateChange(UIF_OPT_ADD_LAST_NUM);
 			break;
 		case SYS_KEY_ENTER:
-			ud.f.filter_enabled = !ud.f.filter_enabled;
 			XLCD_LINE2();
-			XLCD_PUTS(ud.f.filter_enabled?sEnabled:sDisabled);
-			/// \todo Effectively enable/disable filtering
+			if (ud.f.filter_enabled)
+			{
+				ud.f.filter_enabled = FALSE;
+				TfDisable();
+				XLCD_PUTS(sDisabled);
+			}
+			else
+			{
+				ud.f.filter_enabled = TRUE;
+				TfEnable();
+				XLCD_PUTS(sEnabled);
+			}
 			break;
 		default:
 			break;

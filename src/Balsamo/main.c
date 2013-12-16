@@ -268,18 +268,19 @@ void SysFsm(void)
 								// CID finished. Parse received messages
 								switch (reason = ParseMessages())
 								{
-									case 0:
-										// Call allowed, end process and idle
+									// Accept hidden call
+									case TF_HID_OK:
+									// Accept number
+									case TF_NUM_OK:
 										CallProcEnd();
 										LogNumStr(telNum, "ALLOWED");
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
 										break;
-
 									// Reject call because of black/whitelist
-									case 1:
+									case TF_NUM_REJECT:
 									// Reject call because of private/unknown
-									case 2:
+									case TF_HID_REJECT:
 										// Pick up
 										LinePickUp();
 										SetD204(LED_ON);
@@ -290,6 +291,17 @@ void SysFsm(void)
 										LogNumStr(telNum, "BLOCKED");
 										/// \todo Send message to user_if
 										UifEventParse(SYS_CALL_RESTRICTED,
+											telNum, 16);
+										break;
+									// Accept number because filter disabled
+									case TF_FILTER_DISABLED:
+									// Accept hidden call because
+									// filter disabled
+									case TF_HID_DISABLED:
+										CallProcEnd();
+										LogNumStr(telNum,
+											"ALLOWED, FILTER DISABLED!");
+										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
 										break;
 								} // switch(ParseMessages())
@@ -320,7 +332,7 @@ void SysFsm(void)
 			break;
 
 		case SYS_RING_END_WAIT:
-			// Wait untile we stop receiving ring patterns,
+			// Wait until we stop receiving ring patterns,
 			// and go back to sleep
 			switch (sysEvent)
 			{
@@ -353,9 +365,9 @@ void SysFsm(void)
 	}// switch(sysStat)
 }
 
-/// Returns 0 if there's nothing to do, 1 if we have to filter the call
-/// because of the blacklist/whitelest, and 2 if we have to filter the call
-/// because the number is unknown/private.
+/// \brief Parses CID messages.
+/// \return TF_OK, TF_NUM_REJECT, TF_DISABLED, TF_HID_REJECT, TF_HID_OK or
+/// TF_HID_DISABLED as in tel_filt.h.
 char ParseMessages(void)
 {
 	/// Received message
@@ -369,7 +381,7 @@ char ParseMessages(void)
 	/// Used for error handling
 	unsigned char lastErr = 0;
 	/// Used to obtain function return values
-	char retVal = 0;
+	char retVal = TF_NUM_OK;
 	/// String used to print date and time
 	char dateTime[17] = "DD-MM, hh:mm    ";
 
@@ -410,7 +422,7 @@ char ParseMessages(void)
 					for (i = 0; (i < msgLen) && (i < 16); i++)
 						telNum[i] = msg[i];
 					telNum[i] = '\0';
-					if (TfNumCheck(telNum)) retVal = 1;
+					retVal = TfNumCheck(telNum);
 				} else lastErr = msgCode;
 				break;
 
@@ -418,7 +430,7 @@ char ParseMessages(void)
 				/// Obtain reason for telephone number absence
 				if (msgLen == CID_CLI_ABS_REASON_LEN)
 				{
-					if (TfFilterHidden()) retVal = 2;
+					retVal = TfFilterHidden();
 					switch(*msg)
 					{
 						case CID_ABS_UNAVAILABLE:

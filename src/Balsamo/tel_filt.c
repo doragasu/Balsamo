@@ -42,6 +42,8 @@ static unsigned char readPos;
 static unsigned char pos;
 /// FALSE if hidden callers should be allowed
 static char filtHidden;
+/// TRUE if call filter is disabled
+static char filtDisabled;
 
 /************************************************************************//**
  * \brief Module initialization. Must be called before using any other
@@ -56,6 +58,7 @@ void TfInit(char filterMode)
 	nums[0] = '\0';
 	end = 0;
 	readPos = 0;
+	filtDisabled = FALSE;
 }
 
 /************************************************************************//**
@@ -86,23 +89,29 @@ char TfNumAdd(char number[])
  *
  * \param[in] number Telephone number to check.
  *
- * \return TF_NUM_OK if the number is allowed or TF_NUM_BLACKLIST if the
- * number is blacklisted.
+ * \return TF_NUM_OK if the number is allowed, TF_NUM_REJECT if the number
+ * is blacklisted (or not in the whitelist), TF_NUM_FILTER_DISABLED if the
+ * number should be rejected, but call filter is disabled.
  ****************************************************************************/
 char TfNumCheck(char number[])
 {
 	int i = 0;
 
-	/// Search number
+	// Search number
 	while ((i < end) && strcmp(&nums[i], number))
 		i += strlen(&nums[i]) + 1;
 
 	if (i < end)
-		/// Number found
-		return (mode == TF_MODE_BLACKLIST)?TF_NUM_BLACKLIST:TF_NUM_OK;
+	{
+		// Number found
+		if (TF_MODE_BLACKLIST == mode)
+			return filtDisabled?TF_FILTER_DISABLED:TF_NUM_REJECT;
+		else return TF_NUM_OK;
+	}
 
-	/// Number not found
-	return (mode == TF_MODE_BLACKLIST)?TF_NUM_OK:TF_NUM_BLACKLIST;
+	// Number not found
+	if (TF_MODE_BLACKLIST == mode) return TF_NUM_OK;
+	else return filtDisabled?TF_FILTER_DISABLED:TF_NUM_REJECT;
 }
 
 /************************************************************************//**
@@ -259,11 +268,28 @@ char TfCfgSave(void)
 /************************************************************************//**
  * \brief Tells if hidden numbers are either allowed or filtered out.
  *
- * \return TRUE if hidden numbers are filtered, or FALSE if hidden numbers
- * are allowed.
+ * \return TF_HID_OK if hidden calls must not be filtered, TF_HID_REJECT if
+ * hidden calls must be rejected, or TF_HID_DISABLED if hidden call should
+ * be rejected but call filter is disabled.
  ****************************************************************************/
 char TfFilterHidden(void)
 {
-	return filtHidden;
+	if (filtHidden) return filtDisabled?TF_HID_DISABLED:TF_HID_REJECT;
+	else return TF_HID_OK;
+}
 
+/************************************************************************//**
+ * \brief Disables call filtering.
+ ****************************************************************************/
+void TfDisable(void)
+{
+	filtDisabled = TRUE;
+}
+
+/************************************************************************//**
+ * \brief Enables call filtering.
+ ****************************************************************************/
+void TfEnable(void)
+{
+	filtDisabled = FALSE;
 }
