@@ -4,10 +4,10 @@ src/Balsamo/Balsamo.mcs
 src/Balsamo/Balsamo.mptags
 src/Balsamo/Balsamo.tagsrc
 src/Balsamo/libp30F6014-coff.a
-src/Balsamo/out/*.o
-src/Balsamo/out/*.cof
-src/Balsamo/out/*.map
-src/Balsamo/out/*.lst
-src/Balsamo/out/*.hex
-src/wav2raw/*.wav
-src/wav2raw/*.raw
+src/Balsamo/out/*.[oO]
+src/Balsamo/out/*.[cC][oO][fF]
+src/Balsamo/out/*.[mM][aA][pP]
+src/Balsamo/out/*.[lL][sS][tT]
+src/Balsamo/out/*.[hH][eE][xX]
+src/wav2raw/*.[wW][aA][vV]
+src/wav2raw/*.[rR][aA][wW]
