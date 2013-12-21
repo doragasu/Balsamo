@@ -56,7 +56,7 @@
 /// Timeout in seconds for receiving CID data since the first RING pattern
 #define TIM_TOUT		5
 /// Timeout in seconds between RING patterns
-#define RING_WAIT_TIM	3
+#define RING_WAIT_TIM	5
 /// Sleep timeout in seconds, mostly used to keep ON the backlight some
 /// seconds, and ensure data gets flushed to the SD card.
 #define SLEEP_TOUT		5
@@ -182,6 +182,7 @@ void SysFsm(void)
 			{
 				case SYS_RING:
 					// RING received, launch 500 ms wait timer
+					TimEvtStop(SLEEP_EVT_TIM);
 					TimEvtRun(SYS_EVT_TIM, 500);
 					// Turn backlight ON
 					BacklightOn();
@@ -272,10 +273,13 @@ void SysFsm(void)
 									case TF_HID_OK:
 									// Accept number
 									case TF_NUM_OK:
-										CallProcEnd();
 										LogNumStr(telNum, "ALLOWED");
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
+										sysStat = SYS_RING_END_WAIT;
+										sysEvent = SYS_NONE;
+										TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM *
+												  1000);
 										break;
 									// Reject call because of black/whitelist
 									case TF_NUM_REJECT:
@@ -287,7 +291,7 @@ void SysFsm(void)
 										sysStat = SYS_LINE_HANG_WAIT;
 										/// \todo Play message from SD card
 										AdcStop();
-										TimEvtRun(SYS_EVT_TIM, 1 * 1000);
+										TimEvtRun(SYS_EVT_TIM, 3 * 1000);
 										LogNumStr(telNum, "BLOCKED");
 										/// \todo Send message to user_if
 										UifEventParse(SYS_CALL_RESTRICTED,
@@ -298,11 +302,14 @@ void SysFsm(void)
 									// Accept hidden call because
 									// filter disabled
 									case TF_HID_DISABLED:
-										CallProcEnd();
 										LogNumStr(telNum,
 											"ALLOWED, FILTER DISABLED!");
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
+										sysStat = SYS_RING_END_WAIT;
+										sysEvent = SYS_NONE;
+										TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM *
+												  1000);
 										break;
 								} // switch(ParseMessages())
 								break;
@@ -320,9 +327,9 @@ void SysFsm(void)
 					// not sent, or we missed it, end call and idle/sleep
 					sysStat = SYS_RING_END_WAIT;
 					AdcStop();
-					/// \todo Inform UIF module
-					XLCD_CLEAR();
-					XLCD_PUTS("NOT SENT!");
+					// Inform UIF module
+					UifEventParse(SYS_CALL_NOT_SENT, NULL, 0);
+					sysEvent = SYS_NONE;
 					TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM * 1000);
 					Log("NOT SENT!");
 					break;

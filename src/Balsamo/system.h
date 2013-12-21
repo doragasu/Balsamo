@@ -54,6 +54,7 @@ typedef enum
 	SYS_CID_INFO,           ///< CID information (Unused)
 	SYS_CALL_ALLOWED,		///< Call allowed (used only for UI)
 	SYS_CALL_RESTRICTED,	///< Call restricted (used only for UI)
+	SYS_CALL_NOT_SENT,		///< Caller number not sent (used only for UI)
 	SYS_CALL_END,			///< End of call (used only for UI)
 	SYS_KEY_UP,             ///< UP-LEFT keyboard event
 	SYS_KEY_DOWN,           ///< DOWN-RIGHT keyboard event

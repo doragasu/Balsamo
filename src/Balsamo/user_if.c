@@ -1090,6 +1090,9 @@ void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 					XLCD_PUTS("FORBIDDEN");
 //					UifStateChange(UIF_IDLE);
 					break;
+				case SYS_CALL_NOT_SENT:
+					XLCD_CLEAR();
+					XLCD_PUTS("NOT SENT!");
 				default:
 					break;
 			}

@@ -37,9 +37,9 @@
 /************************************************************************//**
  * \brief Picks up the phone.
  ****************************************************************************/
-//#define LinePickUp()		LATCbits.LATC4=1
+#define LinePickUp()		LATCbits.LATC4=1
 // Stub for debugging purposes
-#define LinePickUp()
+//#define LinePickUp()
 
 /************************************************************************//**
  * \brief Hangs call.
