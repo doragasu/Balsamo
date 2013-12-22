@@ -55,12 +55,6 @@ void PwmPlayInit(void)
 	/// Initialize timer for FS = 32 kHz
 	TyCON = 0;
 	PRy = FCY / 32000 - 1;	// 32055 Hz for 22118400/4 FCY.
-	/// Initialize Output Compare for PWM mode (OCM = 110) and Timer 2
-#if (_IS_TIMER_2)
-	OCxCON = 0x0006;
-#else
-	OCxCON = 0x000E;
-#endif
 }
 
 /************************************************************************//**
@@ -74,6 +68,12 @@ void PwmPlayInit(void)
  ****************************************************************************/
 void PwmPlayStart(BYTE*(*DataCallback)(UINT *dataLen))
 {
+	/// Initialize Output Compare for PWM mode (OCM = 110) and Timer
+#if (_IS_TIMER_2)
+	OCxCON = 0x0006;
+#else
+	OCxCON = 0x000E;
+#endif
 	/// Initialize structure for data transfer
 	pb.dCb = DataCallback;
 	pb.i = 0;
@@ -100,6 +100,8 @@ void PwmPlayStop(void)
 	/// Stop the timer and disable its interrupts
 	TyCON &= 0x7FFF;
 	_TyIE = 0;
+	/// Disable OCx to make PWM pin go back to High-Z
+	OCxCON = 0;
 }
 
 /************************************************************************//**

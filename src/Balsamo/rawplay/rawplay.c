@@ -61,6 +61,9 @@ BYTE* DataReadCallback(UINT* dataLen)
 }
 
 #ifdef _SPEAKER_TEST
+/************************************************************************//**
+ * \brief Amplifer initialization, to use the integrated speaker.
+ ****************************************************************************/
 static inline void AmpInit(void)
 {
 	/// Init amplifier control bits
@@ -73,8 +76,14 @@ static inline void AmpInit(void)
 }
 #endif
 
+/************************************************************************//**
+ * \brief Enables the amplifer
+ ****************************************************************************/
 #define AmpEnable()		do{LATDbits.LATD10 = 1;}while(0)
 
+/************************************************************************//**
+ * \brief Disables the amplifer
+ ****************************************************************************/
 #define AmpDisable()	do{LATDbits.LATD10 = 0;}while(0)
 
 

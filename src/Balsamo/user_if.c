@@ -620,8 +620,13 @@ int UifInit(void)
 	ud.f.filter_enabled = TRUE;	// Filter enabled by default
 	// Start in the year set state, to avoid working with a wrong year
 	UifStateEnter(UIF_YEAR_SET);
-	// Just to ensure we are safe when using strncpy().
-	for (i = 0; i < UIF_NUM_RECENT_NUMS; i++) ud.recNum[i][16] = '\0';
+	// Initialize recent calls storage
+	for (i = 0; i < UIF_NUM_RECENT_NUMS; i++)
+	{
+		ud.recNum[i][0] = '\0';
+		// Just to ensure we are safe when using strncpy().
+		ud.recNum[i][16] = '\0';
+	}
 
 	return UIF_OK;
 }
@@ -695,6 +700,8 @@ static inline void UifOptEnableDisable(SysEvent e)
  ****************************************************************************/
 static inline void UifOptAddLastNum(SysEvent e)
 {
+	char *num;
+
 	switch (e)
 	{
 		case SYS_KEY_UP:
@@ -705,9 +712,12 @@ static inline void UifOptAddLastNum(SysEvent e)
 			break;
 		case SYS_KEY_ENTER:
 			// ADD LAST NUMBER TO LIST
-			TfNumAdd(ud.recNum[ud.numLast]);
-			TfCfgSave();
-			UifStateChange(UIF_IDLE);
+			if ((num = UifNumGetLast()))
+			{
+				TfNumAdd(num);
+				TfCfgSave();
+				UifStateChange(UIF_IDLE);
+			}
 			break;
 		case SYS_KEY_ESC:
 			UifStateChange(UIF_IDLE);
@@ -1081,18 +1091,20 @@ void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 					XLCD_PUTS(eventData);
 					XLCD_LINE2();
 					XLCD_PUTS("ALLOWED");
-//					UifStateChange(UIF_IDLE);
+					UifInsert(eventData);
 					break;
 				case SYS_CALL_RESTRICTED:
 					XLCD_CLEAR();
 					XLCD_PUTS(eventData);
 					XLCD_LINE2();
-					XLCD_PUTS("FORBIDDEN");
-//					UifStateChange(UIF_IDLE);
+					XLCD_PUTS("BLOCKED");
+					UifInsert(eventData);
 					break;
 				case SYS_CALL_NOT_SENT:
 					XLCD_CLEAR();
-					XLCD_PUTS("NOT SENT!");
+					XLCD_PUTS("  NO CALLER ID");
+					XLCD_LINE2();
+					XLCD_PUTS("   RECEIVED!");
 				default:
 					break;
 			}

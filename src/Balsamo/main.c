@@ -389,8 +389,6 @@ char ParseMessages(void)
 	unsigned char lastErr = 0;
 	/// Used to obtain function return values
 	char retVal = TF_NUM_OK;
-	/// String used to print date and time
-	char dateTime[17] = "DD-MM, hh:mm    ";
 
 	/// Clear telephone number
 	for (i = 0; i < 16; i++) telNum[i] = ' ';
@@ -405,14 +403,6 @@ char ParseMessages(void)
 				/// Obtain date and time
 				if (msgLen == 8)
 				{
-					dateTime[0]  = msg[2];
-					dateTime[1]  = msg[3];
-					dateTime[3]  = msg[0];
-					dateTime[4]  = msg[1];
-					dateTime[7]  = msg[4];
-					dateTime[8]  = msg[5];
-					dateTime[10] = msg[6];
-					dateTime[11] = msg[7];
 					/// Set the time
 					RtcSetTime(A2Dec(msg[0], msg[1]),
 						A2Dec(msg[2], msg[3]), A2Dec(msg[4], msg[5]),
@@ -463,12 +453,6 @@ char ParseMessages(void)
 				break;
 		} // switch();
 	} // while();
-	/// If there were errors, prepare to print them
-	if (lastErr)
-	{
-		dateTime[14] = hex[msgCode>>4];
-		dateTime[15] = hex[msgCode&15];
-	}
 	return retVal;
 }
 
