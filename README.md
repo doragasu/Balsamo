@@ -1,7 +1,9 @@
 Balsamo
 =======
 
-A gadget (HW + SW) for unwanted calls filtering. The name comes from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". The acronym itself, means "Balm". When Balsamo detects an incoming call, it decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside an SD card.
+A gadget (HW + SW) for unwanted calls filtering. The name comes from the Spanish acronym "Bloqueador Avanzado de Llamadas Sistemáticas, Automáticas, Molestas y Ocultas", that means something like "Advanced Blocker for Systematic, Automatic, Annoying and Hidden Calls". The acronym itself, means "Balm". When Balsamo detects an incoming call, it decodes the caller number. If the number is configured to be blocked (or if the number is hidden and hidden numbers are configured to be blocked), BALSAMO answers the call with a message pre-recorded inside a microSD card.
+
+![Balsamo Rev.B](https://github.com/doragasu/Balsamo/blob/master/BalsamoRevB.jpg "Balsamo Revision B")
 
 Features
 ========
