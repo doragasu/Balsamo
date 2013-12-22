@@ -49,7 +49,6 @@
 /// User Interface states available
 typedef enum
 {
-	UIF_GREETS,					///< Print greeting
 	UIF_IDLE,					///< Default status
 	UIF_OPT_ENABLE_DISABLE,		///< Enable/disable call filter
 	UIF_OPT_ADD_LAST_NUM,		///< Add last received number to filter file
@@ -57,6 +56,7 @@ typedef enum
 	UIF_ADD_NUM,				///< Edit number to add to filter file
 	UIF_OPT_CALL_LIST,			///< List recent received calls
 	UIF_CALL_LIST,				///< Navigate recent received calls
+	UIF_CALL_LIST_ADD,			///< Add a number from recent calls to list
 	UIF_OPT_TEL_LIST,			///< Browse stored telephones
 	UIF_TEL_LIST,				///< Navigate stored telephones
 	UIF_TEL_DELETE,				///< Delete stored telephone
@@ -96,6 +96,7 @@ typedef struct
 	unsigned char numFirst;               ///< First num in list
 	unsigned char numLast;                ///< Last num in list
 	unsigned char numPos;                 ///< Position in list
+	unsigned char numLastReturned;        ///< Position of the last returned
 	char full;                            ///< TRUE if list full
 	UifFlags f;                           ///< Module flags
 	UifStrEntry str;                      ///< String entry data
@@ -108,12 +109,6 @@ static const char chWheel[12] =
 	0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x7F, 0x2E
 };
 */
-
-/// Greeting first line
-/// \todo duplicated shit in main.c, fix.
-static const char greetL1[] = "BALSAMO HW v1.0 ";
-/// Greeting second line
-static const char greetL2[] = "BALSAMO FW v0.6 ";
 
 /// String to indicate something is enabled (or ON)
 static const char sEnabled[]  = "ON ";
@@ -129,6 +124,8 @@ static const char sNo[] = "NO ";
 static UifData ud;
 /// Temporal buffer to input numbers
 static char sNum[14];
+/// Used for generic yes/no queries
+static char yesQuery;
 
 /// Advances one position in the received call list
 /// \warning: use only for list insertions
@@ -200,6 +197,7 @@ static char *UifNumGetFirst(void)
 
 	/// Get the number and advance
 	retVal = ud.recNum[ud.numPos];
+	ud.numLastReturned = ud.numPos;
 	UifAdvance(ud.numPos);
 
 	return retVal;
@@ -221,6 +219,7 @@ static char *UifNumGetNext(void)
 
 	/// Get the number and advance.
 	retVal = ud.recNum[ud.numPos];
+	ud.numLastReturned = ud.numPos;
 	UifAdvance(ud.numPos);
 
 	return retVal;
@@ -240,7 +239,7 @@ static char *UifNumGetLast(void)
 
 	/// Get the number
 	UifBack(ud.numPos);
-
+	ud.numLastReturned = ud.numPos;
 	return ud.recNum[ud.numPos];
 }
 
@@ -256,8 +255,18 @@ static char *UifNumGetPrev(void)
 	if (ud.numPos == ud.numFirst) return UifNumGetLast();
 
 	UifBack(ud.numPos);
+	ud.numLastReturned = ud.numPos;
 	return ud.recNum[ud.numPos];
 }
+
+/************************************************************************//**
+ * \brief Returns the last number returned previously by UifGetFirst(),
+ * UifGetLast(), UifGetNext() or UifGetPrev().
+ *
+ * \return String with the last number returned previously by other of the
+ * UifGet* functions.
+ ****************************************************************************/
+#define UifNumGetLastReturned()	(ud.recNum[ud.numLastReturned])
 
 /************************************************************************//**
  * \brief Prepares the interface for the user to input a string.
@@ -488,17 +497,10 @@ static void UifStateEnter(UifState ns)
 	char *num;
 
 	// Clear screen
-	if (ns != UIF_TEL_DELETE /*&& ns != UIF_IDLE*/) XLCD_CLEAR();
+	if (ns != UIF_TEL_DELETE && ns != UIF_CALL_LIST_ADD) XLCD_CLEAR();
 
 	switch (ns)
 	{
-		case UIF_GREETS:
-			// Print greetings string
-			XLCD_PUTS(greetL1);
-			XLCD_LINE2();
-			XLCD_PUTS(greetL2);
-			break;
-
 		case UIF_IDLE:
 			// Print date and time
 			/// \todo Add more information in line 2?
@@ -541,7 +543,14 @@ static void UifStateEnter(UifState ns)
 			// Print the last number in the list
 			XLCD_PUTS("RECENT CALL LIST");
 			XLCD_LINE2();
-			XLCD_PUTS(UifNumGetLast());
+			XLCD_PUTS(UifNumGetLastReturned());
+			break;
+
+		case UIF_CALL_LIST_ADD:
+			// Add number from Call List
+			XLCD_LINE1();
+			XLCD_PUTS("ADD?: NO        ");
+			yesQuery = FALSE;
 			break;
 
 		case UIF_OPT_TEL_LIST:
@@ -615,7 +624,7 @@ int UifInit(void)
 {
 	int i;
 
-	ud.numFirst = ud.numLast = ud.numPos = 0;
+	ud.numFirst = ud.numLast = ud.numPos = ud.numLastReturned = 0;
 	ud.full = FALSE;
 	ud.f.filter_enabled = TRUE;	// Filter enabled by default
 	// Start in the year set state, to avoid working with a wrong year
@@ -807,7 +816,7 @@ static inline void UifOptCallList(SysEvent e)
 			UifStateChange(UIF_OPT_TEL_LIST);
 			break;
 		case SYS_KEY_ENTER:
-			UifStateChange(UIF_CALL_LIST);
+			if (UifNumGetLast()) UifStateChange(UIF_CALL_LIST);
 			break;
 		case SYS_KEY_ESC:
 			UifStateChange(UIF_IDLE);
@@ -835,10 +844,42 @@ static inline void UifCallList(SysEvent e)
 			UifPrintStrLine2(UifNumGetNext());
 			break;
 		case SYS_KEY_ENTER:
-			UifStateChange(UIF_IDLE);
+			UifStateChange(UIF_CALL_LIST_ADD);
 			break;
 		case SYS_KEY_ESC:
 			UifStateChange(UIF_OPT_CALL_LIST);
+			break;
+		default:
+			break;
+	}
+}
+
+/************************************************************************//**
+ * \brief Processes events while adding a recent call number to the list.
+ *
+ * \param[in] e Received event to process
+ ****************************************************************************/
+static inline void UifCallListAdd(SysEvent e)
+{
+	switch (e)
+	{
+		case SYS_KEY_UP:
+		case SYS_KEY_DOWN:
+			yesQuery = !yesQuery;
+			// Second line, pos 6
+			XLCD_SETPOS(0x06);
+			XLCD_PUTS(yesQuery?sYes:sNo);
+			break;
+		case SYS_KEY_ENTER:
+			if (yesQuery)
+			{
+				TfNumAdd(UifNumGetLastReturned());
+				TfCfgSave();
+			}
+			UifStateChange(UIF_IDLE);			
+			break;
+		case SYS_KEY_ESC:
+			UifStateChange(UIF_CALL_LIST);
 			break;
 		default:
 			break;
@@ -1045,8 +1086,6 @@ void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 
 	switch (ud.s)
 	{
-		case UIF_GREETS:
-			break;
 		case UIF_IDLE:
 			UifIdleProc(sysEvt);
 			break;
@@ -1067,6 +1106,9 @@ void UifEventParse(SysEvent sysEvt, char eventData[], int dataLen)
 			break;
 		case UIF_CALL_LIST:
 			UifCallList(sysEvt);
+			break;
+		case UIF_CALL_LIST_ADD:
+			UifCallListAdd(sysEvt);
 			break;
 		case UIF_OPT_TEL_LIST:
 			UifOptTelList(sysEvt);

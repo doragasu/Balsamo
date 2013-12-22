@@ -145,7 +145,4 @@ void __attribute__((interrupt, auto_psv)) _TyInterrupt (void)
 			}
 			break;
 	}
-
-	/// \todo disk_timerproc handling?
-//	disk_timerproc();
 }

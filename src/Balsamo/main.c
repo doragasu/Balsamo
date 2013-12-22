@@ -94,7 +94,7 @@ void LogNumStr(char num[], char str[]);
 /// Line 1 of the welcome message
 static const char line1[] = "BALSAMO HW Rev.B";
 /// Line 2 of the welcome message
-static const char line2[] = "BALSAMO FW v0.8 ";
+static const char line2[] = "BALSAMO FW v1.0 ";
 /// Buffer used to temporary store the received telephone number line
 static char telNum[17];
 

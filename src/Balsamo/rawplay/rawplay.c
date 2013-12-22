@@ -153,6 +153,7 @@ BYTE RawPlayFile(char file[])
 #ifdef _SPEAKER_TEST
 				AmpDisable();
 #endif
+				PwmPlayStop();
 				f_close(&f);
 				play = FALSE;
 				return 3;
@@ -164,6 +165,7 @@ BYTE RawPlayFile(char file[])
 #ifdef _SPEAKER_TEST
 	AmpDisable();
 #endif
+	PwmPlayStop();
 	/// Everything OK, close file and exit
 	f_close(&f);
 	return 0;
