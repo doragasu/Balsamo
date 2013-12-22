@@ -11,12 +11,13 @@ Features
 - Private/hidden numbers can also be allowed or rejected.
 - Two different audio messages can be played to the caller, each time a call is rejected. One message is for calls blacklisted or not included in the whitelist. The other is for private/hidden calls.
 - microSD card slot. The card records the audio message files, the configuration file (including the blacklist/whitelist) and the log file.
-- Logs to microSD card all the calls, and the action performed for each of them (ALLOW/REJECT).
+- Logs to microSD card all the calls, and the action performed for each of them (ALLOW/BLOCK).
 - Simple user interface with a 2x16 LCD, 4 LEDs and 5 pushbuttons (only 4 of them are used so far).
-- Very low power design. While idle (most of the time, waiting for an incoming call) most of the system is shut down (almost everything excepting the RING detector), draining around 4,4 mA.
-- Custom PCB with one chip (a dsPIC) performing most of the actions. No external ADC, DAC, CID decoder, SD controller, Flash memory chip, etc. Only a dsPIC and some analog chips.
+- Very low power design. While idle (most of the time, waiting for an incoming call) most of the system is shut down (almost everything excepting the LCD and RING detector), draining around 4,4 mA. While active, current goes up to around 20 mA.
+- Optimized FSK decoder implementation. It has been written mostly in dsPIC assembly language, and carefully optimized.
+- Custom PCB with only one chip (a dsPIC) performing most of the actions. No external ADC, DAC, CID decoder, SD controller, Flash memory chip, etc. Only a dsPIC and some analog chips.
 - Design allows for a backup battery to be used, for the system to continue operating (and without losing date and time) when the main power source fails.
-- Lots of free PADs in the PCB, to allow hacking/expanding the design when needed.
+- Lots of free PADs in the PCB, to allow hacking/expanding the design as needed.
 - Everything in this project (source code, schematics, board files and documentation, excepting external libraries used) is GPLv3+ licensed.
 
 External components used
@@ -69,6 +70,22 @@ A GNU Octave/Matlab script called wav2raw is provided under `src/wav2raw`, to co
 Two audio files can be used with Balsamo. They must be placed in the root of the microSD card:
 - `FILTER.RAW`: This file is played each time a call is rejected due to number in blacklist or not in whitelist.
 - `FORBID.RAW`: This file is played each time a call is rejected because the number is private/hidden, and these kind of calls are configured to be blocked (`BLACKLIST_UNKNOWN` is set in the second line of the `BALSAMO.CFG` file).
+
+LOG file format
+===============
+
+Balsamo stores a log file inside the root of the SD card, called `BALSAMO.LOG`. Each line of this file corresponds to a call event, starting with date and time, following with the caller number (if any) and ending with the action performed by Balsamo and an optional comment. An example section of a Balsamo log file looks like this:
+
+        15/11/2013, 09:51 --> 123456789 ALLOWED
+        15/11/2013, 10:16 --> 555555555 BLOCKED
+        15/11/2013, 18:35 --> PRIVATE BLOCKED
+        15/11/2013, 20:21 --> 555555555 ALLOWED, FILTER DISABLED!
+        15/11/2013, 20:32 --> PRIVATE ALLOWED, FILTER DISABLED!
+
+Built-in amplifier
+==================
+
+Rev.B of the Balsamo PCB features a small amplifier, able to drive a little speaker. This amplifier has been tested and works, but it is unused at the moment. It might be used in the future to play a notification sound when a call is blocked, and to play previously recorded calls (if I implement the answering machine capabilities). If you are brave enough to try building your own Balsamo, you don't need to assemble the amplifier to get all the functionalities implemented right now.
 
 Some features I might add
 ============================================================
