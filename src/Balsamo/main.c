@@ -114,9 +114,6 @@ SysStat  sysStat  = SYS_SLEEP;
 /// Last occured system event
 SysEvent sysEvent;
 
-/// Hex character set, used for binary to hexadecimal conversion
-static const char hex[17] = "0123456789ABCDEF";
-
 /// Main function. It just initializes system, and then Sleeps/Idles most of
 /// the time. When awake, it just loops on the system state machine SysFsm().
 int main(void)
@@ -181,8 +178,11 @@ void SysFsm(void)
 			switch(sysEvent)
 			{
 				case SYS_RING:
-					// RING received, launch 500 ms wait timer
+					// Disable sleep. We will idle instead because
+					// we need the timer clock to be enabled
 					TimEvtStop(SLEEP_EVT_TIM);
+					sleep = FALSE;
+					// RING received, launch 500 ms wait timer
 					TimEvtRun(SYS_EVT_TIM, 500);
 					// Turn backlight ON
 					BacklightOn();
@@ -191,9 +191,6 @@ void SysFsm(void)
 					SetD201(LED_ON);
 					// Switch to the ring timer wait status
 					sysStat = SYS_RING_TIM;
-					// Disable sleep. We will idle instead because
-					// we need the timer clock to be enabled
-					sleep = FALSE;
 					/// Pass event to user interface
 					UifEventParse(SYS_RING, NULL, 0);
 					break;
@@ -227,7 +224,6 @@ void SysFsm(void)
 					// D202 will blink when receiving ADC data
 					SetD202(LED_ON);
 					// Launch FSK pattern timeout
-					sysEvent = SYS_NONE;
 					TimEvtRun(SYS_EVT_TIM, TIM_TOUT * 1000);
 					// Start ADC
 					AdcStart();
@@ -262,7 +258,12 @@ void SysFsm(void)
 
 							case CID_ERROR:
 								// Error, end call process and idle
-								CallProcEnd();
+								TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM * 1000);
+								sysStat = SYS_RING_END_WAIT;
+								AdcStop();
+								Log("CID ERROR!");
+								// Inform UIF module
+								UifEventParse(SYS_CALL_NOT_SENT, NULL, 0);
 								break;
 
 							case CID_END:
@@ -277,7 +278,6 @@ void SysFsm(void)
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
 										sysStat = SYS_RING_END_WAIT;
-										sysEvent = SYS_NONE;
 										TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM *
 												  1000);
 										break;
@@ -307,7 +307,6 @@ void SysFsm(void)
 										UifEventParse(SYS_CALL_ALLOWED,
 											telNum, 16);
 										sysStat = SYS_RING_END_WAIT;
-										sysEvent = SYS_NONE;
 										TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM *
 												  1000);
 										break;
@@ -318,20 +317,16 @@ void SysFsm(void)
 					break;
 
 				case SYS_TIM_EVT:
-					// Timeout end call process and idle/sleep
-					CallProcEnd();
-					break;
-
+					// Timeout for FSK data
 				case SYS_RING:
 					// Another ring pattern received, so the FSK data was
 					// not sent, or we missed it, end call and idle/sleep
+					TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM * 1000);
 					sysStat = SYS_RING_END_WAIT;
 					AdcStop();
+					Log("NOT SENT!");
 					// Inform UIF module
 					UifEventParse(SYS_CALL_NOT_SENT, NULL, 0);
-					sysEvent = SYS_NONE;
-					TimEvtRun(SYS_EVT_TIM, RING_WAIT_TIM * 1000);
-					Log("NOT SENT!");
 					break;
 				default:
 					break;
